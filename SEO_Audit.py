@@ -1,7 +1,6 @@
 from lxml import html
 import requests
 import csv
-import urllib
 from bs4 import BeautifulSoup
 #
 #
