@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 #
 #
 #Author: Sean Carey
-#Date: 4/11/2017
+#Date: 5/4/2017
 #Version: 2.0 Beta
 #
 #
