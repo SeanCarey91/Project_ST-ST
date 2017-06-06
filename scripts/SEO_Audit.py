@@ -22,7 +22,7 @@ robots = ''
 urls = raw_input("Please Enter URL:")
 if urls == None:
     print "please restart & enter a correct url"
-print "________________________\n"
+print "_____________________________\n"
 global score
 score = 0
 global server
@@ -30,25 +30,27 @@ page = requests.get(urls)
 tree = html.fromstring(page.content)
 #Sign In button scrape for serverside code
 def clientside():
-       global urls
-       global page
-       global score
-       global server
-       webpage= page
-       soup= BeautifulSoup(webpage.text,"lxml")
-       banner = soup.find(attrs={'id':'logo'})
-       if banner == None:
-           print 'Client Side Webpage'
-           print 'TEST: FAIL'
-           print "_____________________________\n"
-       else:
-           server= banner['title']
-           print 'Server Side Webpage'
-           print 'TEST: PASSED'
-           print "_____________________________\n"
-           score = score +1
-
-       return score
+    global urls
+    global page
+    global score
+    global server
+    status = ' '
+    webpage= page
+    soup= BeautifulSoup(webpage.text,"lxml")
+    banner = soup.find(attrs={'id':'logo'})
+    #Problem with below is unless the fast fonts url is exact it will not be found. need new way to find the script.
+    jsScript = soup.find(attrs={'src':'//fast.fonts.net/*'})
+    if banner == None:
+        status = 'Client Side Webpage'
+    else:
+        server= banner['title']
+        status = 'Server Side Webpage'
+    if jsScript == None:
+        status = 'Server Side Webpage'
+    else:
+        status = 'Client Side Webpage'
+    print status
+    print "_____________________________\n"
 #HTTP status code check
 def httpStatus():
    global score
