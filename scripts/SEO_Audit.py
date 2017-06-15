@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup
 #
 #
 #Author: Sean Carey
-#Date: 5/4/2017
-#Version: 2.0 Beta
+#Date: 6/15/2017
+#Version: 2.1 Beta
 #
 #
 #Variables
@@ -39,7 +39,7 @@ def clientside():
     soup= BeautifulSoup(webpage.text,"lxml")
     banner = soup.find(attrs={'id':'logo'})
     #Problem with below is unless the fast fonts url is exact it will not be found. need new way to find the script.
-    jsScript = soup.find(attrs={'src':'//fast.fonts.net/*'})
+    jsScript = soup.find(attrs={'src':'//fast.fonts.net/'})
     if banner == None:
         status = 'Client Side Webpage'
     else:
