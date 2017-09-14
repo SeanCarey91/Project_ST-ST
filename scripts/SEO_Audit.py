@@ -5,9 +5,13 @@ from bs4 import BeautifulSoup
 #
 #
 #Author: Sean Carey
-#Date: 6/15/2017
+#Date: 9/11/2017
 #Version: 2.1 Beta
-#
+#Errors so far:
+# 1. Score is not adding correctly
+# 2. Title extract is not working correctly, need to strip html snippets
+# 3. Client side vs. Server side has no single element. so need to figure out
+#    what elements can be used.
 #
 #Variables
 global urls
@@ -42,15 +46,20 @@ def clientside():
     jsScript = soup.find(attrs={'src':'//fast.fonts.net/'})
     if banner == None:
         status = 'Client Side Webpage'
+        score ==0
     else:
         server= banner['title']
         status = 'Server Side Webpage'
+        score == 1
     if jsScript == None:
         status = 'Server Side Webpage'
+        score ==1
     else:
         status = 'Client Side Webpage'
+        score ==0
     print status
     print "_____________________________\n"
+    return score
 #HTTP status code check
 def httpStatus():
    global score
@@ -84,13 +93,14 @@ def noIndex():
        print "Page is ready to be Indexed!"
        print 'TEST: PASSED'
        print "_____________________________\n"
-       score = score +1
+       score +=1
    else:
        robots = desc['content']
        print "Robots.txt:"
        print desc['content']
        print 'TEST: FAIL'
        print "_____________________________\n"
+       score -=1
    return score
 
 #Pass/Fail score
@@ -185,6 +195,9 @@ def metaTitle():
     webpage= page
     soup= BeautifulSoup(webpage.text,"lxml")
     title = soup.findAll('title')
+    #Need to find a way to convert this object to a string so I can remove the [<title> & </title>]
+    #title.replace('[<title>', '')
+    #title.replace('</title>]', '')
     print "Title Tag:"
     print title
     print "________________________\n"
