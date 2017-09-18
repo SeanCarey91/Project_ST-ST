@@ -1,111 +1,97 @@
-from lxml import html
 import requests
-import csv
+import sys
 from bs4 import BeautifulSoup
+
 #
 #
 #Author: Sean Carey
-#Date: 9/11/2017
-#Version: 2.1 Beta
-#Errors so far:
-# 1. Score is not adding correctly
-# 2. Title extract is not working correctly, need to strip html snippets
-# 3. Client side vs. Server side has no single element. so need to figure out
-#    what elements can be used.
+#Date: 9/18/2017
+#Version: 3.1 Beta
+#Updated version with help from Alex Galea of Aiyma
 #
-#Variables
-global urls
-global page
-global tree
-global hs
-hs =''
-global httpStatus
-httpStatus = ''
-global robots
-robots = ''
-urls = raw_input("Please Enter URL:")
-if urls == None:
-    print "please restart & enter a correct url"
-print "_____________________________\n"
-global score
-score = 0
-global server
-page = requests.get(urls)
-tree = html.fromstring(page.content)
-#Sign In button scrape for serverside code
-def clientside():
-    global urls
-    global page
-    global score
-    global server
-    status = ' '
-    webpage= page
-    soup= BeautifulSoup(webpage.text,"lxml")
+
+def main():
+    urls = raw_input("Please Enter URL:")
+    if urls == None:
+        sys.exit('please restart & enter a correct url')
+    print "_____________________________\n"
+
+    score = 0
+
+    page = requests.get(urls)
+    if not page.ok:
+        sys.exit('4xx or 5xx status code returned')
+    soup = BeautifulSoup(page.text, "lxml")
+
+    #***Order of opertions executed does matter***
+    server, status, score = clientside(soup, score)
+    status_code = httpStatus(page)
+    robots, score = noIndex(soup, score)
+    finalScore(score)
+
+    urlSyntax(urls)
+    tags(soup)
+    metaDesc(soup)
+    metaTitle(soup)
+    responsive(soup)
+
+def clientside(soup, score):
+    status = ''
+    server = ''
     banner = soup.find(attrs={'id':'logo'})
     #Problem with below is unless the fast fonts url is exact it will not be found. need new way to find the script.
     jsScript = soup.find(attrs={'src':'//fast.fonts.net/'})
     if banner == None:
         status = 'Client Side Webpage'
-        score ==0
+        score -= 1
     else:
         server= banner['title']
         status = 'Server Side Webpage'
-        score == 1
+        score += 1
     if jsScript == None:
         status = 'Server Side Webpage'
-        score ==1
+        score +=1
     else:
         status = 'Client Side Webpage'
-        score ==0
+        score -= 1
     print status
     print "_____________________________\n"
-    return score
-#HTTP status code check
-def httpStatus():
-   global score
-   global httpStatus
-   try:
-       status = requests.head(urls)
-       code = status.status_code
-       httpStatus = code
-       print "HTTP Status:"
-       print httpStatus
-       print "_____________________________\n"
-       return httpStatus
-   except requests.ConnectionError:
-       code = 'n/a'
-       httpStatus = 'N/A'
-       print "HTTP Status:"
-       print httpStatus
-       print "_____________________________\n"
-       return httpStatus
+    return server, status, score
 
-#NoIndex/NoFollow test
-def noIndex():
-   global urls
-   global page
-   global score
-   webpage= page
-   soup= BeautifulSoup(webpage.text,"lxml")
-   desc= soup.find(attrs={'name':'robots'})
-   if desc == None:
-       robots = "NONE"
-       print "Page is ready to be Indexed!"
-       print 'TEST: PASSED'
-       print "_____________________________\n"
-       score +=1
-   else:
-       robots = desc['content']
-       print "Robots.txt:"
-       print desc['content']
-       print 'TEST: FAIL'
-       print "_____________________________\n"
-       score -=1
-   return score
+def httpStatus(page):
+    '''
+    HTTP status code check
+    '''
+    httpStatus = page.status_code
+    print "HTTP Status:"
+    print httpStatus
+    print "_____________________________\n"
+    return httpStatus
 
-#Pass/Fail score
-def finalScore():
-    global score
+def noIndex(soup, score):
+    '''
+    NoIndex/NoFollow test
+    '''
+    desc = soup.find(attrs={'name':'robots'})
+    if desc == None:
+        robots = "NONE"
+        print "Page is ready to be Indexed!"
+        print 'TEST: PASSED'
+        print "_____________________________\n"
+        score += 1
+    else:
+        robots = desc['content']
+        print "Robots.txt:"
+        print desc['content']
+        print 'TEST: FAIL'
+        print "_____________________________\n"
+        score -= 1
+    return robots, score
+
+def finalScore(score):
+    '''
+    Pass/Fail score
+    '''
     print "Final Score:"
     print score
     if score == 3:
@@ -116,8 +102,7 @@ def finalScore():
        print "________________________\n"
        #quit()
 
-def urlSyntax():
-    global urls
+def urlSyntax(urls):
     ssl = 'https://'
     w =  'www.'
     macys = 'macys.com'
@@ -143,14 +128,9 @@ def urlSyntax():
         print "This is a CE site."
         print "________________________\n"
 
-def tags():
-    global urls
-    global page
-    webpage= page
-    soup= BeautifulSoup(webpage.text,"lxml")
-    canon= soup.find(attrs={'rel':'canonical'})
-    alt= soup.find(attrs={'rel':'alternate'})
+def tags(soup):
     #Canonical Check
+    canon = soup.find(attrs={'rel':'canonical'})
     if canon == None:
         print "No Canonical Tag was found!"
         print "TEST: FAIL"
@@ -160,6 +140,7 @@ def tags():
         print canon['href']
         print "_____________________________\n"
     #Alternate Check
+    alt = soup.find(attrs={'rel':'alternate'})
     if alt == None:
         print "No Alternate Tag was found!"
         print "TEST: FAIL"
@@ -169,12 +150,7 @@ def tags():
         print alt['href']
         print "_____________________________\n"
 
-def metaDesc():
-    global urls
-    global page
-    webpage= page
-    soup= BeautifulSoup(webpage.text,"lxml")
-    #title = soup.find(attrs={'name':''})
+def metaDesc(soup):
     desc = soup.find(attrs={'name':'description'})
     if desc == None:
         print "No Meta Description was found!"
@@ -189,24 +165,13 @@ def metaDesc():
         print len(charCount)
         print "_____________________________\n"
 
-def metaTitle():
-    global urls
-    global page
-    webpage= page
-    soup= BeautifulSoup(webpage.text,"lxml")
-    title = soup.findAll('title')
-    #Need to find a way to convert this object to a string so I can remove the [<title> & </title>]
-    #title.replace('[<title>', '')
-    #title.replace('</title>]', '')
+def metaTitle(soup):
+    title = soup.title.get_text()
     print "Title Tag:"
     print title
     print "________________________\n"
 
-def responsive():
-    global urls
-    global page
-    webpage= page
-    soup= BeautifulSoup(webpage.text,"lxml")
+def responsive(soup):
     respCode = soup.find(attrs={'name':'viewport'})
     if respCode == None:
         print "NOT RESPONSIVE!"
@@ -217,14 +182,5 @@ def responsive():
         print respCode['content']
         print "_____________________________\n"
 
-#Output
-#***Order of opertions executed does matter***
-clientside()
-httpStatus()
-noIndex()
-finalScore()
-urlSyntax()
-tags()
-metaDesc()
-metaTitle()
-responsive()
+if __name__ == '__main__':
+    main()
